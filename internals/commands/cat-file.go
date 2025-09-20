@@ -1,14 +1,5 @@
 package commands
 
-import (
-	"bytes"
-	"compress/zlib"
-	"fmt"
-	"io"
-	"os"
-	"path/filepath"
-)
-
 type CatFileCmd struct{}
 
 // Common structure: git cat-file <type> {[-p] [-t] [-s] [-e]} <object_hash_id>
@@ -17,7 +8,7 @@ func (c *CatFileCmd) Name() string {
 }
 
 // git cat-file -t 213ea341ab567c8d...
-func (c *CatFileCmd) Run(args []string) error {
+/* func (c *CatFileCmd) Run(args []string) error {
 	if len(args) < 4 {
 		return fmt.Errorf("usage: git cat-file [-p|-t|-s] <sha>")
 	}
@@ -73,3 +64,4 @@ func readContent(path string) (string, error) {
 
 	return string(content), nil
 }
+*/

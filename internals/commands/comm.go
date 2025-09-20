@@ -1,7 +1,6 @@
 package commands
 
 import (
-	"errors"
 	"os"
 )
 
@@ -16,7 +15,7 @@ func ParseCmd() []string {
 	return args
 }
 
-func NewCommand(name string) (Command, error) {
+/* func NewCommand(name string) (Command, error) {
 	switch name {
 	case "init":
 		return &InitCmd{}, nil
@@ -28,3 +27,4 @@ func NewCommand(name string) (Command, error) {
 		return nil, errors.New("unknown or not supported command: " + name)
 	}
 }
+*/

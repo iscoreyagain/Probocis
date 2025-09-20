@@ -1,24 +1,13 @@
 package commands
 
-import (
-	"encoding/binary"
-	"fmt"
-	"os"
-	"path/filepath"
-	"strings"
+type UpdateIndCmd struct{} //Class bên trong Java
 
-	"github.com/codecrafters-io/git-starter-go/internals/objects"
-	"github.com/codecrafters-io/git-starter-go/internals/utils"
-)
-
-type UpdateIndCmd struct{}
-
-func (u *UpdateIndCmd) Name() string {
+func (u *UpdateIndCmd) Name() string { //Method
 	return "update-index"
 }
 
 // git update-index --add hello.txt
-func (u *UpdateIndCmd) Run(args []string) error {
+/* func (u *UpdateIndCmd) Run(args []string) error {
 	dir, err := os.Getwd()
 	if err != nil {
 		return fmt.Errorf("driver or directory not found!: %w", err)
@@ -228,3 +217,4 @@ func createEmptyIndex(indexPath string) error {
 	fmt.Println("Succesfully create empty index file at .git/index file with 0 entry")
 	return nil
 }
+*/

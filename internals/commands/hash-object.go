@@ -3,7 +3,7 @@ package commands
 import (
 	"fmt"
 
-	"github.com/codecrafters-io/git-starter-go/internals/utils"
+	"github.com/iscoreyagain/Probocis/internals/utils"
 )
 
 type HashObjCmd struct{}
@@ -15,7 +15,7 @@ func (h *HashObjCmd) Name() string {
 // git hash-object myfile.txt
 // git hash-object -w myfile.txt
 // echo "hello world" | git hash-object --stdin
-
+// ["git", "hash-object", "-w", "myfile.txt", --stdin]
 func (h *HashObjCmd) Run(args []string) error {
 	var isWrite bool
 	var filename string

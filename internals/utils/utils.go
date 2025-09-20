@@ -10,7 +10,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/codecrafters-io/git-starter-go/internals/objects"
+	"github.com/iscoreyagain/Probocis/internals/objects"
 )
 
 func FindRepoRoot() (string, error) {
@@ -102,8 +102,8 @@ func ReadObject(repoRoot, filename string, readFromStdin bool) (objects.GitObjec
 			return nil, fmt.Errorf("failed to read from stdin: %w", err)
 		}
 	} else if filename != "" {
-		filePath := filepath.Join(repoRoot, filename)
-		data, err = os.ReadFile(filePath)
+		filePath := filepath.Join(repoRoot, filename) //"C:\Users\QUOC THAI\myfile.txt"
+		data, err = os.ReadFile(filePath)             //"blob 5\0hello"
 		if err != nil {
 			return nil, fmt.Errorf("failed to read from file: %w", err)
 		}
@@ -135,7 +135,7 @@ func WriteObject(repoRoot, hash string, content []byte) error {
 	// Build the dir
 	objDir := filepath.Join(repoRoot, ".git", "objects", first)
 
-	if err := os.MkdirAll(objDir, 0755); err != nil {
+	if err := os.MkdirAll(objDir, 0755); err != nil { //0755 - permission mode
 		return fmt.Errorf("failed to create object dir: %w", err)
 	}
 
@@ -144,6 +144,7 @@ func WriteObject(repoRoot, hash string, content []byte) error {
 	if err != nil {
 		return err
 	}
+
 	// Write the compressed data from the previous buffer to the file (which is named from the remaining 62 hex chars)
 	objPath := filepath.Join(objDir, rest)
 
@@ -184,9 +185,9 @@ func ReadIndex(indexPath string) ([]objects.IndexEntry, error) {
 	return entries, nil
 }
 
-func WriteIndex(indexPath string, content []byte) error {
+/* func WriteIndex(indexPath string, content []byte) error {
 
-}
+} */
 
 func GetNumEntries(indexPath string) (uint32, error) {
 	file, err := os.Open(indexPath)
