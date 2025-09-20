@@ -1,10 +1,10 @@
 package main
 
 import (
-	"crypto/sha256"
 	"fmt"
+	"os"
 
-	"github.com/codecrafters-io/git-starter-go/internals/commands"
+	"github.com/iscoreyagain/Probocis/internals/commands"
 )
 
 // Usage: your_program.sh <command> <arg1> <arg2> ...
@@ -41,8 +41,22 @@ import (
 */
 
 func main() {
-	git := commands.GitObject{Type: "blob", Content: byte[]("hello world")}
-	hashObject
-	
-	fmt.Printf("Hash: %x", hash)
+	// Ensure the command is invoked with "hash-object" as the first argument
+	if len(os.Args) < 2 || os.Args[1] != "hash-object" {
+		fmt.Fprintln(os.Stderr, "Usage: git hash-object [-w] [--stdin] [<file>]")
+		os.Exit(1)
+	}
+
+	// Create an instance of HashObjCmd
+	cmd := &commands.HashObjCmd{}
+
+	// Pass arguments after "hash-object" to the Run method
+	// os.Args[2:] skips the program name and "hash-object"
+	err := cmd.Run(os.Args[2:])
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
+
+	os.Exit(0)
 }
