@@ -1,40 +1,56 @@
 package commands
 
-type UpdateIndCmd struct{} //Class bên trong Java
+import (
+	"fmt"
+	"os"
+	"path/filepath"
 
-func (u *UpdateIndCmd) Name() string { //Method
+	"github.com/iscoreyagain/Probocis/internals/objects"
+	"github.com/iscoreyagain/Probocis/internals/utils"
+)
+
+type IndexAction interface {
+	Execute() error
+}
+
+type AddAction struct {
+	RepoRoot, File string
+}
+
+func (a *AddAction) Execute() error {
+	return add(a.RepoRoot, a.File)
+}
+
+type RemoveAction struct {
+	RepoRoot, File string
+}
+
+func (a *RemoveAction) Execute() error {
+	return remove(a.RepoRoot, a.File)
+}
+
+type UpdateIndexCmd struct{} //Class bên trong Java
+
+func (u *UpdateIndexCmd) Name() string { //Method
 	return "update-index"
 }
 
 // git update-index --add hello.txt
-/* func (u *UpdateIndCmd) Run(args []string) error {
-	dir, err := os.Getwd()
+func (u *UpdateIndexCmd) Run(args []string) error {
+	repoRoot, err := utils.FindRepoRoot() // ← thêm
 	if err != nil {
-		return fmt.Errorf("driver or directory not found!: %w", err)
+		return err
 	}
 
-	var action string
-	var filename string
-
-	for i := 0; i < len(args); i++ {
+	for i := range len(args) {
 		switch args[i] {
 		case "--add":
-			AddEntry
+			return (&AddAction{RepoRoot: repoRoot, File: args[i+1]}).Execute()
+		case "--remove":
+			return (&RemoveAction{RepoRoot: repoRoot, File: args[i+1]}).Execute()
 		}
 	}
-	//Get current working directory (~relative path)
-
-	obj, err := ReadObject(args)
-	if err != nil {
-		return err
-	}
-
-	objHash
-	if err := cmd.Run(args); err != nil {
-		return err
-	}
-
-	return nil
+	return fmt.Errorf("no valid flag provided")
 }
 
 // Besides ["git", "update-index"], it also currently supports essential flags:
@@ -44,83 +60,27 @@ func (u *UpdateIndCmd) Name() string { //Method
 // "--replace"
 // "--refresh"
 
-type UpdateOpts struct {
-	Add       bool
-	Remove    bool
-	Replace   bool
-	Refresh   bool
-	CacheInfo *CacheInfoEntry
-}
+// git update-index --add src/hello.txt
 
-type CacheInfoEntry struct {
-	Mode string
-	Hash string
-	Path string
-}
-
-// type ChmodEntry struct {Mode string, Path string}
-
-// The func() will parse the users' command into Go structured-format to easily manipulate
-func parseOptions(args []string) (*UpdateOpts, error) {
-	opts := &UpdateOpts{}
-	pos := 1
-
-	for pos < len(args) {
-		switch args[pos] {
-		case "--add":
-			pos++
-			if pos >= len(args) {
-				return nil, fmt.Errorf("missing path after --add")
-			}
-			opts.Add = true
-		case "--remove":
-			pos++
-			if pos >= len(args) {
-				return nil, fmt.Errorf("missing path after --remove")
-			}
-			opts.Remove = true
-		case "--cacheinfo":
-			pos++
-			if pos >= len(args) {
-				return nil, fmt.Errorf("missing cacheinfo value")
-			}
-			parts := strings.Split(args[pos], ",")
-			if len(parts) != 3 {
-				return nil, fmt.Errorf("invalid cacheinfo format")
-			}
-			opts.CacheInfo = &CacheInfoEntry{
-				Mode: parts[0], Hash: parts[1], Path: parts[2],
-			}
-		case "--replace":
-			pos++
-			opts.Replace = true
-		case "--refresh":
-			pos++
-			opts.Refresh = true
-		default:
-			return nil, fmt.Errorf("unknown flag: %s", args[pos])
-		}
-		pos++
-	}
-	return opts, nil
-}
-
-// git update-index --add hello.txt
-// Purpose: Add an existing file (entry) into .git/index for the next commit. In case if the index file not existed, create a new one then add
+// add stages a file into the index for the next commit.
+// It resolves the given file path relative to repoRoot, computes its SHA-1 hash,
+// and upserts the corresponding entry into .probocis/index.
+// If the index file does not exist, it will be created automatically.
 func add(repoRoot string, file string) error {
-	indexPath := filepath.Join(repoRoot, ".git", "index")
-
-	// check whether the current wd has .git/index yet
-	if _, err := os.Stat(indexPath); os.IsNotExist(err) {
-		if err := createEmptyIndex(indexPath); err != nil {
-			return err
-		}
-	}
-
-	//Read the existing file
+	// take the current working directory - CWD combine with the file
 	filePath, err := utils.ResolvePath(file)
 	if err != nil {
-		fmt.Errorf(filePath)
+		return err
+	}
+
+	relativePath, err := filepath.Rel(repoRoot, filePath)
+	if err != nil {
+		return err
+	}
+
+	fileInfo, err := os.Lstat(filePath)
+	if err != nil {
+		return err
 	}
 
 	content, err := os.ReadFile(filePath)
@@ -128,56 +88,24 @@ func add(repoRoot string, file string) error {
 		return err
 	}
 
-	//Compute SHA-1
 	hash := utils.ComputeHash(content)
-	hashStr := fmt.Sprintf("%x", hash) //1
 
-	//Create blob object in .git/objects
-	if err := utils.WriteObject(repoRoot, hashStr, hash); err != nil {
-		return err
-	}
+	entry := objects.CreateNewEntry(relativePath, [20]byte(hash), fileInfo)
 
-	//Adding it to .git/index file
-	fileInfo, err := os.Stat(filePath)
-	if err != nil {
-		return fmt.Errorf("failed to check file mode due to: %w", err)
-	}
-
-	fileMode := fileInfo.Mode()                           //2
-	fileSize := fileInfo.Size()                           //3
-	relativePath, err := filepath.Rel(repoRoot, filePath) //4
+	entries, err := objects.LoadIndexFromDisk()
 	if err != nil {
 		return err
 	}
 
-	entry := &objects.IndexEntry{
-		Mode: uint32(fileMode),
-		Size: uint32(fileSize),
-		Hash: [20]byte(hash),
-		Path: relativePath,
-	}
+	objects.Upsert(&entries, entry)
 
-	n, err := getNumEntries(indexPath)
-	if err != nil {
-		return err
-	}
-
-	data, err := entry.Serialize()
-	if err != nil {
-		return err
-	}
-
-	if err := utils.WriteIndex(indexPath, data); err != nil {
-		return fmt.Errorf("Failed to write/modify expected entry due to: %w", err)
-	}
-
-	return nil
+	return objects.SaveIndexToDisk(entries)
 }
 
 // git update-index --remove README.txt
 // Purpose: Remove a file from the index (it will no longer be tracked)
 func remove(repoRoot string, file string) error {
-
+	return nil
 }
 
 // git update-index --cacheinfo 100644,5f6b8f...,file.txt
@@ -199,22 +127,21 @@ func replace() {
 }
 
 // Helper function
-func createEmptyIndex(indexPath string) error {
-	var numEntries uint32 = 0
-
-	index, err := os.Create(indexPath)
-	if err != nil {
-		return fmt.Errorf("Failed to create index file in .git repo: %w", err)
-	}
-
-	defer index.Close()
-
-	//Write number of total entries in the first 4 bytes
-	if err := binary.Write(index, binary.BigEndian, numEntries); err != nil {
-		return fmt.Errorf("Failed to initiate the number of entries due to: %w", err)
-	}
-
-	fmt.Println("Succesfully create empty index file at .git/index file with 0 entry")
-	return nil
-}
-*/
+//func createEmptyIndex(indexPath string) error {
+//	var numEntries uint32 = 0
+//
+//	index, err := os.Create(indexPath)
+//	if err != nil {
+//		return fmt.Errorf("Failed to create index file in .git repo: %w", err)
+//	}
+//
+//	defer index.Close()
+//
+//	//Write number of total entries in the first 4 bytes
+//	if err := binary.Write(index, binary.BigEndian, numEntries); err != nil {
+//		return fmt.Errorf("Failed to initiate the number of entries due to: %w", err)
+//	}
+//
+//	fmt.Println("Succesfully create empty index file at .git/index file with 0 entry")
+//	return nil
+//}

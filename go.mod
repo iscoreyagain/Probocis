@@ -1,3 +1,5 @@
 module github.com/iscoreyagain/Probocis
 
-go 1.23.5
+go 1.25.11
+
+require golang.org/x/sys v0.45.0

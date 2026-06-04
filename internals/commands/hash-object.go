@@ -3,6 +3,7 @@ package commands
 import (
 	"fmt"
 
+	"github.com/iscoreyagain/Probocis/internals/objects"
 	"github.com/iscoreyagain/Probocis/internals/utils"
 )
 
@@ -17,6 +18,10 @@ func (h *HashObjCmd) Name() string {
 // echo "hello world" | git hash-object --stdin
 // ["git", "hash-object", "-w", "myfile.txt", --stdin]
 func (h *HashObjCmd) Run(args []string) error {
+	if len(args) == 0 {
+		return fmt.Errorf("usage: probocis hash-object [-w] [--stdin] <given_file>")
+	}
+
 	var isWrite bool
 	var filename string
 	var readFromStdin bool
@@ -49,18 +54,18 @@ func (h *HashObjCmd) Run(args []string) error {
 		repoRoot = root
 	}
 
-	obj, err := utils.ReadObject(repoRoot, filename, readFromStdin)
+	obj, err := objects.ReadObject(repoRoot, filename, readFromStdin)
 	if err != nil {
 		return fmt.Errorf("Failed to read object due to: %w", err)
 	}
 
-	objHash, objData, err := utils.HashObject(obj)
+	objHash, objData, err := objects.HashObject(obj)
 	if err != nil {
 		return err
 	}
 
 	if isWrite {
-		if err := utils.WriteObject(repoRoot, objHash, objData); err != nil {
+		if err := objects.WriteObject(repoRoot, objHash, objData); err != nil {
 			return err
 		}
 	}

@@ -7,56 +7,50 @@ import (
 	"github.com/iscoreyagain/Probocis/internals/commands"
 )
 
-// Usage: your_program.sh <command> <arg1> <arg2> ...
-/*func main() {
-	// You can use print statements as follows for debugging, they'll be visible when running tests.
-	fmt.Fprintf(os.Stderr, "Logs from your program will appear here!\n")
-
-	if len(os.Args) < 2 {
-		fmt.Fprintf(os.Stderr, "usage: prob <command> [<args>...]\n")
-		os.Exit(1)
-	}
-
-	switch command := os.Args[1]; command {
-	case "init":
-
-		for _, dir := range []string{".git", ".git/objects", ".git/refs"} {
-			if err := os.MkdirAll(dir, 0755); err != nil {
-				fmt.Fprintf(os.Stderr, "Error creating directory: %s\n", err)
-			}
-		}
-
-		headFileContents := []byte("ref: refs/heads/main\n")
-		if err := os.WriteFile(".git/HEAD", headFileContents, 0644); err != nil {
-			fmt.Fprintf(os.Stderr, "Error writing file: %s\n", err)
-		}
-
-		fmt.Println("Initialized git directory")
-
-	default:
-		fmt.Fprintf(os.Stderr, "Unknown command %s\n", command)
-		os.Exit(1)
-	}
-}
-*/
-
 func main() {
-	// Ensure the command is invoked with "hash-object" as the first argument
-	if len(os.Args) < 2 || os.Args[1] != "hash-object" {
-		fmt.Fprintln(os.Stderr, "Usage: git hash-object [-w] [--stdin] [<file>]")
-		os.Exit(1)
+	if len(os.Args) < 2 {
+		printHelp()
+		return
 	}
 
-	// Create an instance of HashObjCmd
-	cmd := &commands.HashObjCmd{}
+	if os.Args[1] == "shutdown" {
+		fmt.Println("Shutting down gracefully...")
+		return
+	}
 
-	// Pass arguments after "hash-object" to the Run method
-	// os.Args[2:] skips the program name and "hash-object"
-	err := cmd.Run(os.Args[2:])
+	cmdName := os.Args[1]
+	cmd, err := commands.NewCommand(cmdName)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
 
-	os.Exit(0)
+	if err := cmd.Run(os.Args[2:]); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
+}
+
+func printHelp() {
+	fmt.Println("Probocis is a internal tool for managing version control like well-known Git, written in Go")
+	fmt.Println()
+	fmt.Println("Usage:")
+	fmt.Println("    probocis <command> [arguments]")
+	fmt.Println()
+	fmt.Println("Low-level Commands (Plumbing):")
+	fmt.Println("    hash-object  compute object ID and optionally create a blob")
+	fmt.Println("    cat-file  inspect repository objects")
+	fmt.Println("    update-index  manipulate the index")
+	fmt.Println("    write-tree  create a tree object from the the index")
+	fmt.Println("    commit-tree  create a commit object")
+	fmt.Println("    read-tree  populate the index from a tree object")
+	fmt.Println("    update-ref  update object references")
+	fmt.Println("    symbolic-ref  manage symbolic references")
+	fmt.Println("High-level Commands (Porcelain):")
+	fmt.Println("    init  initialize the repository")
+	fmt.Println("    add  add files to the staging area")
+	fmt.Println("    commit  create a new commit")
+	fmt.Println("    status  display repository status")
+	fmt.Println("    log  show commit history")
+	fmt.Println("    diff  show file differences")
 }

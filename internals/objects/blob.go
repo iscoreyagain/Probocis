@@ -1,17 +1,17 @@
 package objects
 
 type Blob struct {
-	Data []byte
+	data []byte
 }
 
 func (b *Blob) Type() string {
 	return "blob"
 }
 
-func (b *Blob) Content() []byte {
-	return b.Data
+func (b *Blob) Data() []byte {
+	return b.data
 }
 
 func NewBlob(data []byte) *Blob {
-	return &Blob{Data: data}
+	return &Blob{data: data}
 }

@@ -1,7 +1,7 @@
 package commands
 
 import (
-	"os"
+	"errors"
 )
 
 type Command interface {
@@ -9,22 +9,19 @@ type Command interface {
 	Run(args []string) error
 }
 
-func ParseCmd() []string {
-	args := os.Args[1:]
-
-	return args
-}
-
-/* func NewCommand(name string) (Command, error) {
+func NewCommand(name string) (Command, error) {
 	switch name {
 	case "init":
 		return &InitCmd{}, nil
-	case "clone":
-		return &CloneCmd{}, nil
-	case "commit":
-		return &CommitCmd{}, nil
+	case "hash-object":
+		return &HashObjCmd{}, nil
+	case "cat-file":
+		return &CatFileCmd{}, nil
+	case "update-index":
+		return &UpdateIndexCmd{}, nil
+	case "ls-files":
+		return &LsFilesCmd{}, nil
 	default:
 		return nil, errors.New("unknown or not supported command: " + name)
 	}
 }
-*/
