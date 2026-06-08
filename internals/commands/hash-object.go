@@ -70,6 +70,6 @@ func (h *HashObjCmd) Run(args []string) error {
 		}
 	}
 
-	fmt.Print(objHash)
+	fmt.Println(objHash)
 	return nil
 }
