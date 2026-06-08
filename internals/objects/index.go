@@ -131,7 +131,7 @@ func SaveIndexToDisk(entries []*IndexEntry) error {
 	sort.Slice(entries, func(i, j int) bool {
 		return entries[i].Path < entries[j].Path
 	})
-	
+
 	root, err := utils.FindRepoRoot()
 	if err != nil {
 		return err
@@ -276,14 +276,11 @@ func (i *IndexEntry) Deserialize(r io.Reader) error {
 }
 
 func normalizeMode(fMode uint32) constants.FileMode {
-	fmt.Printf("fMode: %o, S_IFLNK: %o, AND: %o\n", fMode, syscall.S_IFLNK, fMode&syscall.S_IFLNK)
-	perm := fMode & 0o777
-
 	switch {
-	case fMode&syscall.S_IFLNK == 0:
+	case fMode&syscall.S_IFLNK == syscall.S_IFLNK:
 		return constants.ModeSymlink
-	case perm&0o111 != 0:
-		return constants.ModeExecutable
+	case fMode&syscall.S_IFDIR == syscall.S_IFDIR:
+		return constants.ModeDirectory
 	default:
 		return constants.ModeRegular
 	}
