@@ -41,7 +41,9 @@ func NewTree(entries []*TreeNode) *Tree {
 	return &Tree{entries: entries}
 }
 
-func ConstructTreeFromEntries() (*Tree, error) {
+// ConstructTreeFromEntries loads the current index and builds an in-memory
+// tree reflecting the staged directory structure.
+func ConstructTreeFromEntries() (*TreeNode, error) {
 	entries, err := LoadIndexFromDisk()
 	if err != nil {
 		return nil, err
@@ -55,15 +57,23 @@ func ConstructTreeFromEntries() (*Tree, error) {
 		parts := strings.Split(entry.Path, "/")
 		curr := root
 
-		// If it was a blob obj
-		if len(parts) == 1 {
-			
-			curr.Hash = entry.Hash
-			curr.Name = parts[0]
-			curr.Mode = entry.Mode
-			curr.Children = nil
-		} else {
-
+		for _, part := range parts[:len(parts)-1] {
+			if _, ok := curr.Children[part]; !ok {
+				curr.Children[part] = &TreeNode{
+					Name:     part,
+					Mode:     constants.ModeDirectory,
+					Children: make(map[string]*TreeNode),
+				}
+			}
+			curr = curr.Children[part]
+		}
+		name := parts[len(parts)-1]
+		curr.Children[name] = &TreeNode{
+			Name:     name,
+			Mode:     entry.Mode,
+			Hash:     entry.Hash,
+			Children: nil,
 		}
 	}
+	return root, nil
 }

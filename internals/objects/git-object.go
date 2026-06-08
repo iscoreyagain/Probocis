@@ -13,7 +13,7 @@ func NewGitObject(objType string, content []byte) (GitObject, error) {
 		return NewBlob(content), nil
 
 	case "tree":
-		return NewTree(content), nil
+		return ParseTree(content)
 
 	case "commit":
 		return NewCommit(content), nil

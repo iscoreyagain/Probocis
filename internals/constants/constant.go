@@ -1,5 +1,8 @@
 package constants
 
+const RepoDir = ".probocis"
+const HeadFile = "HEAD"
+
 type FileMode uint32
 
 const (
@@ -11,3 +14,4 @@ const (
 )
 
 type ObjectID [20]byte
+

@@ -8,8 +8,10 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 
+	"github.com/iscoreyagain/Probocis/internals/constants"
 	"github.com/iscoreyagain/Probocis/internals/utils"
 )
 
@@ -94,8 +96,6 @@ func ReadObject(repoRoot, filename string, readFromStdin bool) (GitObject, error
 		}
 	}
 
-	fmt.Println(data) //debug
-
 	return NewBlob(data), nil
 }
 
@@ -139,4 +139,36 @@ func WriteObject(repoRoot, hash string, content []byte) error {
 	}
 
 	return nil
+}
+
+// Format per entry: <mode> <name> \0<20 byte raw hash>
+func ParseTree(data []byte) (*Tree, error) {
+	var entries []*TreeNode
+
+	start := 0
+	for start < len(data) {
+		null := bytes.IndexByte(data[start:], 0)
+		header := string(data[start : start+null]) // "100644 main.go"
+
+		parts := strings.SplitN(header, " ", 2)
+
+		start += null + 1
+		var hash [20]byte
+		copy(hash[:], data[start:start+20])
+		start += 20
+
+		modeVal, err := strconv.ParseUint(parts[0], 8, 32)
+		if err != nil {
+			return nil, fmt.Errorf("invalid mode: %s", parts[0])
+		}
+
+		node := &TreeNode{
+			Mode: constants.FileMode(modeVal),
+			Name: parts[1],
+			Hash: hash,
+		}
+
+		entries = append(entries, node)
+	}
+	return NewTree(entries), nil
 }

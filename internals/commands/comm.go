@@ -21,6 +21,8 @@ func NewCommand(name string) (Command, error) {
 		return &UpdateIndexCmd{}, nil
 	case "ls-files":
 		return &LsFilesCmd{}, nil
+	case "write-tree":
+		return &WriteTreeCmd{}, nil
 	default:
 		return nil, errors.New("unknown or not supported command: " + name)
 	}
